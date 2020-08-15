@@ -1,0 +1,47 @@
+pipeline
+{
+    agent any
+    stages
+    {
+        stage('ContinuousDownload')
+        {
+            steps
+            {
+                git 'https://github.com/vaishnavi972/maven.git'
+            }
+        }
+        stage('ContinuousBuild')
+        {
+            steps
+            {
+                sh label: '', script: 'mvn package'
+            }
+        }
+        stage('ContinuousDeployment')
+        {
+            steps
+            {
+                sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/DeclarativePipeline1/webapp/target/webapp.war ubuntu@172.31.5.113:/var/lib/tomcat8/webapps/test1.war'
+            }
+        }
+        stage('ContinuousTesting')
+        {
+            steps
+            {
+                git 'https://github.com/vaishnavi972/FunctionalTesting.git'
+                sh label: '', script: 'java -jar /home/ubuntu/.jenkins/workspace/DeclarativePipeline1/testing.jar'
+            }
+        }
+    }
+    post
+    {
+        success
+        {
+                sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/DeclarativePipeline1/webapp/target/webapp.war ubuntu@172.31.5.239:/var/lib/tomcat8/webapps/prod1.war'
+        }
+        failure
+        {
+                mail bcc: '', body: '', cc: '', from: '', replyTo: '', subject: 'CI has failed', to: 'hamsralavaishnavi@gmail.com'
+        }
+    }
+}
